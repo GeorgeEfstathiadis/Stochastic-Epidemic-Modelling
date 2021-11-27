@@ -78,16 +78,11 @@ def seir_simulate_discrete(y0, t, beta, alpha, gamma):
     return data3.iloc[:, 1:]
 
 
-class XYTransition:
-    def __init__(self, observations: bool, **kwargs):
-        self.observations = observations
-        self.args = kwargs
-
-
 def particle_filter(
     Y,
     theta_proposal,
-    distribution=XYTransition(False, p=0.1),
+    observations=False,
+    probs=.1,
     n_particles=1000,
     n_population=4820,
     mu=20,
@@ -114,10 +109,10 @@ def particle_filter(
     hidden_process[0, :, :] = zetas_small[0, :, :]
 
     for p in range(1, len(Y)):
-        if not distribution.observations:
-            weights[p, :] = np.mean(np.array([binom.pmf(Y[p - 1, i], zetas_small[p - 1, :, i], distribution.args["p"]) for i in range(Y.shape[1])]), axis=0)
+        if not observations:
+            weights[p, :] = np.mean(np.array([binom.pmf(Y[p - 1, i], zetas_small[p - 1, :, i], probs) for i in range(Y.shape[1])]), axis=0)
         else:
-            weights[p, :] = np.mean(np.array([binom.pmf(Y[p-1, i], zetas_small[p-1, :, i] / distribution.args["p"], **distribution.args) for i in range(Y.shape[1])]), axis=0)
+            weights[p, :] = np.mean(np.array([binom.pmf(Y[p-1, i], zetas_small[p-1, :, i] / probs, probs) for i in range(Y.shape[1])]), axis=0)
 
         zetas[p] = zetas[p - 1] * np.mean(weights[p, :])
 
@@ -203,7 +198,8 @@ def particle_mcmc(
     h,
     sigma = None,
     n_chains=1000,
-    hiddenDistribution=XYTransition(False, p=0.1),
+    observations=False,
+    probs=.1,
     n_particles=1000,
     n_population=4820,
     mu=20,
@@ -226,7 +222,8 @@ def particle_mcmc(
         zetas, hidden_process, ancestry_matrix = particle_filter(
             Y,
             theta_proposal,
-            hiddenDistribution,
+            observations,
+            probs,
             n_particles,
             n_population,
             mu,
@@ -255,7 +252,8 @@ def particle_mcmc(
         zetas, hidden_process, ancestry_matrix = particle_filter(
             Y,
             theta_proposal,
-            hiddenDistribution,
+            observations,
+            probs,
             n_particles,
             n_population,
             mu,

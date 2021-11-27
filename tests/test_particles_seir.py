@@ -53,7 +53,8 @@ plt.show()
 zetas, hidden_process, ancestry_matrix = particle_filter(
     data2,
     np.array(parameters),
-    XYTransition(False, p=0.1),
+    False,
+    .1,
     n_particles=1000,
     n_population=4820,
     mu=20,
@@ -102,7 +103,8 @@ for _ in range(10):
     zetas, _, _ = particle_filter(
         data2,
         parameters,
-        XYTransition(False, p=0.1),
+        False,
+        .1,
         n_particles=100,
         n_population=4820,
         mu=20,
@@ -115,7 +117,8 @@ for _ in range(10):
     zetas, _, _ = particle_filter(
         data2,
         parameters,
-        XYTransition(False, p=0.1),
+        False,
+        .1,
         n_particles=1000,
         n_population=4820,
         mu=20,

@@ -1,5 +1,7 @@
 import os
 import time
+import sys
+sys.path.append('.')
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -9,7 +11,7 @@ from scipy.integrate import odeint
 from scipy.stats import binom, norm
 from tqdm import tqdm
 
-from gillespie_algo import sir_simulate2
+from gillespie_algo import sir_simulate
 from pmcmc import *
 
 t = np.linspace(0, 14, num=200)
@@ -48,8 +50,9 @@ data4 = np.array(np.round(dataset.iloc[:, 1:-1]).astype(int))
 t = time.time()
 zetas, hidden_process, ancestry_matrix = particle_filter(
     data2,
-    parameters,
-    XYTransition(False, p=0.1),
+    np.array(parameters),
+    False,
+    .1,
     n_particles=100,
     n_population=4820,
     mu=20,
@@ -60,8 +63,9 @@ print(time.time() - t)
 t = time.time()
 zetas, hidden_process, ancestry_matrix = particle_filter(
     data2,
-    parameters,
-    XYTransition(False, p=0.1),
+    np.array(parameters),
+    observations=False,
+    probs=.1,
     n_particles=1000,
     n_population=4820,
     mu=20,
