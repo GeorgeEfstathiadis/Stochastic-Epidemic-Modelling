@@ -32,8 +32,14 @@ for t in range(dataset.shape[0]):
     data2 = np.append(data2, np.array([[sus, exp, inf, rec]]), axis=0)
 data2 = data2[1:]
 
-sigma = None
-parameters0 = [2, 2, 2]
+sigma = np.array(
+    [
+        [ 0.50686723, -0.08784096,  0.16301259],
+        [-0.08784096,  0.07270184,  0.01273669],
+        [ 0.16301259,  0.01273669,  0.09337051]
+    ]
+)
+parameters0 = [3.61670991, 1.12679347, 0.99946218]
 # results_directory = "pmcmc_seir_adaptive/test1/"
 # results_directory = "data/" + results_directory
 # thetas = np.loadtxt(results_directory + "thetas.csv", delimiter=",")
@@ -55,33 +61,35 @@ thetas, likelihoods, sampled_trajs = particle_mcmc(
     mu=20,
     jobs=-1,
 )
-results_directory = "pmcmc_seir_adaptive/test1/"
-graphs_directory = "run6/"
+results_directory = "pmcmc_seir/test1/"
+graphs_directory = "seir/test1/"
 
-results_directory = "runs/data/" + results_directory
-graphs_directory = "runs/graphs/PMCMC_4_1_1/" + graphs_directory
+results_directory = "data/" + results_directory
+graphs_directory = "graphs/PMCMC_4_1_1/" + graphs_directory
 
 if not os.path.exists(results_directory):
     os.makedirs(results_directory)
 if not os.path.exists(graphs_directory):
     os.makedirs(graphs_directory)
 
-# # save results
+# save results
 np.savetxt(results_directory + "thetas.csv", thetas, delimiter=",")
 np.savetxt(results_directory + "likelihoods.csv", likelihoods, delimiter=",")
 np.savetxt(results_directory + "sampled_trajs_susceptible.csv", sampled_trajs[:, :, 0], delimiter=",")
-np.savetxt(results_directory + "sampled_trajs_infected.csv", sampled_trajs[:, :, 1], delimiter=",")
-np.savetxt(results_directory + "sampled_trajs_recovered.csv", sampled_trajs[:, :, 2], delimiter=",")
+np.savetxt(results_directory + "sampled_trajs_exposed.csv", sampled_trajs[:, :, 1], delimiter=",")
+np.savetxt(results_directory + "sampled_trajs_infected.csv", sampled_trajs[:, :, 2], delimiter=",")
+np.savetxt(results_directory + "sampled_trajs_recovered.csv", sampled_trajs[:, :, 3], delimiter=",")
 
-# load results
+# # load results
 # thetas = np.loadtxt(results_directory + "thetas.csv", delimiter=",")
 # likelihoods = np.loadtxt(results_directory + "likelihoods.csv", delimiter=",")
 # sampled_trajs_susceptible = np.loadtxt(results_directory + "sampled_trajs_susceptible.csv", delimiter=",")
+# sampled_trajs_exposed = np.loadtxt(results_directory + "sampled_trajs_exposed.csv", delimiter=",")
 # sampled_trajs_infected = np.loadtxt(results_directory + "sampled_trajs_infected.csv", delimiter=",")
 # sampled_trajs_recovered = np.loadtxt(results_directory + "sampled_trajs_recovered.csv", delimiter=",")
-# sampled_trajs = np.stack((sampled_trajs_susceptible, sampled_trajs_infected, sampled_trajs_recovered), axis=-1)
+# sampled_trajs = np.stack((sampled_trajs_susceptible, sampled_trajs_exposed, sampled_trajs_infected, sampled_trajs_recovered), axis=-1)
 
-## burn-in
+# # burn-in
 # burn_in = 100
 
 # thetas2 = thetas[burn_in:, :]
@@ -89,11 +97,17 @@ np.savetxt(results_directory + "sampled_trajs_recovered.csv", sampled_trajs[:, :
 # sampled_trajs2 = sampled_trajs[:, burn_in:, :]
 
 # ## apply thinning
-# thinning = 10
+# thinning = 1
 
 # thetas3 = thetas2[::thinning]
 # likelihoods3 = likelihoods2[::thinning]
 # sampled_trajs3 = sampled_trajs2[:, ::thinning, :]
+
+# ## cut chain
+# thetas3 = thetas3[:900]
+# likelihoods3 = likelihoods3[:900]
+# sampled_trajs3 = sampled_trajs3[:, :900, :]
+
 
 # ## calculate posterior variance
 # thetas_unique = np.unique(thetas3, axis=0)
@@ -110,12 +124,19 @@ np.savetxt(results_directory + "sampled_trajs_recovered.csv", sampled_trajs[:, :
 # plt.plot(
 #     range(len(likelihoods3)),
 #     thetas3[:, 1],
+#     color="red",
+#     linewidth=1,
+#     label="alpha",
+# )
+# plt.plot(
+#     range(len(likelihoods3)),
+#     thetas3[:, 2],
 #     color="orange",
 #     linewidth=1,
 #     label="gamma",
 # )
 # plt.legend()
-# plt.savefig(graphs_directory + "beta_gamma.png", bbox_inches='tight')
+# plt.savefig(graphs_directory + "beta_alpha_gamma.png", bbox_inches='tight')
 # plt.show()
 
 # ## plot thetas - scatterplot
@@ -126,11 +147,13 @@ np.savetxt(results_directory + "sampled_trajs_recovered.csv", sampled_trajs[:, :
 
 # ## plot thetas - histogram
 # plt.hist(thetas3[:, 0], bins=10, alpha=0.5, label="beta")
-# plt.hist(thetas3[:, 1], bins=10, alpha=0.5, label="gamma")
-# plt.axvline(beta)
-# plt.axvline(gamma)
+# plt.hist(thetas3[:, 1], bins=10, alpha=0.5, label="alpha")
+# plt.hist(thetas3[:, 2], bins=10, alpha=0.5, label="gamma")
+# plt.axvline(parameters[0], color="red", linestyle="dashed", linewidth=1)
+# plt.axvline(parameters[1], color="red", linestyle="dashed", linewidth=1)
+# plt.axvline(parameters[2], color="red", linestyle="dashed", linewidth=1)
 # plt.legend()
-# plt.savefig(graphs_directory + "beta_gamma3.png", bbox_inches='tight')
+# plt.savefig(graphs_directory + "beta_alpha_gamma3.png", bbox_inches='tight')
 # plt.show()
 
 # ## plot likelihoods
@@ -142,12 +165,11 @@ np.savetxt(results_directory + "sampled_trajs_recovered.csv", sampled_trajs[:, :
 # lines1 = plt.plot(
 #     range(len(data2)), sampled_trajs3[:, :, 0], "orange", linewidth=1
 # )
-# plt.plot(
-#     range(len(data2)), sampled_trajs3[:, :, 1], "orange", linewidth=1
-# )
-# plt.plot(
-#     range(len(data2)), sampled_trajs3[:, :, 2], "orange", linewidth=1
-# )
+# for i in range(1, sampled_trajs3.shape[2]):
+#     plt.plot(
+#         range(len(data2)), sampled_trajs3[:, :, i], "orange", linewidth=1
+#     )
+
 # lines4 = plt.plot(range(len(data2)), dataset.iloc[:, 1:], "k", linewidth=2)
 # lines5 = plt.plot(range(len(data2)), data2, "k--", linewidth=2)
 # plt.legend(
