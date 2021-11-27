@@ -213,8 +213,9 @@ def particle_mcmc(
     thetas = np.zeros((n_chains, len(parameters)))
     likelihoods = np.zeros(n_chains)
     sampled_trajs = np.zeros((Y.shape[0], n_chains, Y.shape[1]))
+    std = sigma
     if sigma is None:
-        std = np.eye(len(parameters))
+        std = np.eye(len(parameters))        
     while True:
         theta_proposal = abs(
             np.random.multivariate_normal(
