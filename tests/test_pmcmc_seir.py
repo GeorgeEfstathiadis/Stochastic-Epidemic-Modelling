@@ -55,17 +55,18 @@ thetas, likelihoods, sampled_trajs = particle_mcmc(
     .5,
     sigma = sigma,
     n_chains=5000,
-    hiddenDistribution=XYTransition(False, p=0.1),
+    observations=False,
+    probs=.1,
     n_particles=500,
     n_population=4820,
     mu=20,
     jobs=-1,
 )
-results_directory = "pmcmc_seir/test1/"
-graphs_directory = "seir/test1/"
+results_directory = "pmcmc_seir/test2/"
+graphs_directory = "PMCMC_4_1_1/seir/test2/"
 
 results_directory = "data/" + results_directory
-graphs_directory = "graphs/PMCMC_4_1_1/" + graphs_directory
+graphs_directory = "graphs/" + graphs_directory
 
 if not os.path.exists(results_directory):
     os.makedirs(results_directory)
