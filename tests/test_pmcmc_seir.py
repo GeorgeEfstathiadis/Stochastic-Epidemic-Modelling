@@ -34,12 +34,12 @@ data2 = data2[1:]
 
 sigma = np.array(
     [
-        [ 0.50686723, -0.08784096,  0.16301259],
-        [-0.08784096,  0.07270184,  0.01273669],
-        [ 0.16301259,  0.01273669,  0.09337051]
+        [ 0.0743337 , -0.00724316,  0.0178649 ],
+        [-0.00724316,  0.01109966,  0.00191581],
+        [ 0.0178649 ,  0.00191581,  0.01025782]
     ]
 )
-parameters0 = [3.61670991, 1.12679347, 0.99946218]
+parameters0 = [4.01702919, 0.91147714, 0.79621439]
 # results_directory = "pmcmc_seir_adaptive/test1/"
 # results_directory = "data/" + results_directory
 # thetas = np.loadtxt(results_directory + "thetas.csv", delimiter=",")
@@ -53,17 +53,17 @@ thetas, likelihoods, sampled_trajs = particle_mcmc(
     data2,
     parameters0,
     1,
-    sigma = sigma,
+    sigma=sigma,
     n_chains=5000,
     observations=False,
     probs=.1,
-    n_particles=100,
+    n_particles=200,
     n_population=4820,
     mu=20,
     jobs=-1,
 )
-results_directory = "pmcmc_seir/test2/"
-graphs_directory = "PMCMC_4_1_1/seir/test2/"
+results_directory = "pmcmc_seir/test3/"
+graphs_directory = "PMCMC_4_1_1/seir/test3/"
 
 results_directory = "data/" + results_directory
 graphs_directory = "graphs/" + graphs_directory
