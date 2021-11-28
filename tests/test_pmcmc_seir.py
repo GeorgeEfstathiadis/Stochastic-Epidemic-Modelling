@@ -52,11 +52,11 @@ parameters0 = [3.61670991, 1.12679347, 0.99946218]
 thetas, likelihoods, sampled_trajs = particle_mcmc(
     data2,
     parameters0,
-    1,
+    .5,
     sigma = sigma,
     n_chains=5000,
     hiddenDistribution=XYTransition(False, p=0.1),
-    n_particles=100,
+    n_particles=500,
     n_population=4820,
     mu=20,
     jobs=-1,
