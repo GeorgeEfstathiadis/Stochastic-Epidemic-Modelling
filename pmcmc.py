@@ -110,9 +110,9 @@ def particle_filter(
 
     for p in range(1, len(Y)):
         if not observations:
-            weights[p, :] = np.mean(np.array([binom.pmf(Y[p - 1, i], zetas_small[p - 1, :, i], probs) for i in range(Y.shape[1])]), axis=0)
+            weights[p, :] = np.min(np.array([binom.pmf(Y[p - 1, i], zetas_small[p - 1, :, i], probs) for i in range(Y.shape[1])]), axis=0)
         else:
-            weights[p, :] = np.mean(np.array([binom.pmf(Y[p-1, i], zetas_small[p-1, :, i] / probs, probs) for i in range(Y.shape[1])]), axis=0)
+            weights[p, :] = np.min(np.array([binom.pmf(Y[p-1, i], zetas_small[p-1, :, i] / probs, probs) for i in range(Y.shape[1])]), axis=0)
 
         zetas[p] = zetas[p - 1] * np.mean(weights[p, :])
 
