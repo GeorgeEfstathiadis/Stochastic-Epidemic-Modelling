@@ -43,8 +43,10 @@ data2 = data2[1:]
 # # observed infected and removed
 # data4 = np.array(np.round(dataset.iloc[:, 1:-1]).astype(int))
 
-theta_proposal = [3, .5, .5]
-sigma = None
+theta_proposal = [1.9768184925128203, 1.0565016104074507, 0.09617052095125977]
+sigma = np.array([[1.37205778e-01, 9.88305291e-02, 5.51798318e-04],
+       [9.88305291e-02, 7.96786290e-02, 2.62894256e-04],
+       [5.51798318e-04, 2.62894256e-04, 7.39801937e-05]])
 h = .5
 # results_directory = "pmcmc_adaptive/test1/"
 # results_directory = "data/" + results_directory
