@@ -45,3 +45,22 @@ thetas, likelihoods, sampled_trajs = particle_mcmc(
     mu=mu,
     n_particles=100,
     )
+
+results_directory = "pmcmc_seir/test3/"
+graphs_directory = "PMCMC_4_1_1/seir/test3/"
+
+results_directory = "data/" + results_directory
+graphs_directory = "graphs/" + graphs_directory
+
+if not os.path.exists(results_directory):
+    os.makedirs(results_directory)
+if not os.path.exists(graphs_directory):
+    os.makedirs(graphs_directory)
+
+# save results
+np.savetxt(results_directory + "thetas.csv", thetas, delimiter=",")
+np.savetxt(results_directory + "likelihoods.csv", likelihoods, delimiter=",")
+np.savetxt(results_directory + "sampled_trajs_susceptible.csv", sampled_trajs[:, :, 0], delimiter=",")
+np.savetxt(results_directory + "sampled_trajs_exposed.csv", sampled_trajs[:, :, 1], delimiter=",")
+np.savetxt(results_directory + "sampled_trajs_infected.csv", sampled_trajs[:, :, 2], delimiter=",")
+np.savetxt(results_directory + "sampled_trajs_recovered.csv", sampled_trajs[:, :, 3], delimiter=",")
