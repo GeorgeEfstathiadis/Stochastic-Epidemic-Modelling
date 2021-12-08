@@ -114,6 +114,7 @@ def sir_subgroups_simulate_discrete(y0, t, beta, gamma):
 
 def particle_filter(
     Y,
+    type_model,
     theta_proposal,
     observations=False,
     probs=.1,
@@ -122,36 +123,57 @@ def particle_filter(
     mu=20,
     jobs=4,
 ):
+    if type_model == "sir":
+        model  = sir_simulate_discrete
+    elif type_model == "seir":
+        model = seir_simulate_discrete
+    elif "sir_subgroups" in type_model:
+        model = sir_subgroups_simulate_discrete
+    else:
+        raise ValueError("type_model not recognized")
+    
+    if type_model == "sir_subgroups2":
+        cols = len(mu) * Y.shape[1]
+        zetas_small2 = np.zeros((len(Y), n_particles, Y.shape[1]))
+    else:
+        cols = Y.shape[1]
+        zetas_small2 = np.zeros((len(Y), n_particles, cols))
+    
     zetas = np.zeros(len(Y))
-    zetas_small = np.zeros((len(Y), n_particles, Y.shape[1]))
+    zetas_small = np.zeros((len(Y), n_particles, cols))
     weights = np.zeros((len(Y), n_particles))
     normalised_weights = np.zeros((len(Y), n_particles))
-    hidden_process = np.zeros((len(Y), n_particles, Y.shape[1]))
-    ancestry_matrix = np.zeros((len(Y), n_particles))
+    hidden_process = np.zeros((len(Y), n_particles, cols))
+    ancestry_matrix = np.zeros((len(Y), n_particles))        
 
     zetas[0] = 1
 
-    if Y.shape[1] == 3:
+    if type_model == "sir":
         zetas_small[0, :, 1] = np.random.poisson(mu, n_particles)
         zetas_small[0, :, 0] = n_population - zetas_small[0, :, 1]
         zetas_small[0, :, 2] = 0
-    elif Y.shape[1] == 4:
+    elif type_model == "seir":
         zetas_small[0, :, 2] = np.random.poisson(mu, n_particles)
         zetas_small[0, :, 0] = n_population - zetas_small[0, :, 2]
         zetas_small[0, :, 1] = 0
         zetas_small[0, :, 3] = 0
-    if isinstance(mu, list):
+    elif "sir_subgroups" in type_model:
         for i in range(len(mu)):
             zetas_small[0, :, i*3 + 1] = np.random.poisson(mu[i], n_particles)
             zetas_small[0, :, i*3 + 0] = n_population[i] - zetas_small[0, :, i*3 + 1]
             zetas_small[0, :, i*3 + 2] = 0
     hidden_process[0, :, :] = zetas_small[0, :, :]
 
+    if type_model == "sir_subgroups2":
+        zetas_small2[0, :, :] = sum([zetas_small[0, :, (i*3):((i+1)*3)] for i in range(len(mu))])
+    else:
+        zetas_small2[0, :, :] = zetas_small[0, :, :]
+
     for p in range(1, len(Y)):
         if not observations:
-            weights[p, :] = np.min(np.array([binom.pmf(Y[p - 1, i], zetas_small[p - 1, :, i], probs) for i in range(Y.shape[1])]), axis=0)
+            weights[p, :] = np.min(np.array([binom.pmf(Y[p - 1, i], zetas_small2[p - 1, :, i], probs) for i in range(Y.shape[1])]), axis=0)
         else:
-            weights[p, :] = np.min(np.array([binom.pmf(Y[p-1, i], zetas_small[p-1, :, i] / probs, probs) for i in range(Y.shape[1])]), axis=0)
+            weights[p, :] = np.min(np.array([binom.pmf(Y[p-1, i], zetas_small2[p-1, :, i] / probs, probs) for i in range(Y.shape[1])]), axis=0)
 
         zetas[p] = zetas[p - 1] * np.mean(weights[p, :])
 
@@ -165,73 +187,44 @@ def particle_filter(
             return None, None, None
         ancestry_matrix[p, :] = likely_particles
 
-        if isinstance(mu, int):
-            model_state = [[hidden_process[p-1, j, i] for i in range(Y.shape[1])] for j in range(n_particles)]
-        elif isinstance(mu, list):
-            times = Y.shape[1] / len(mu)
+        if "sir_subgroups" not in type_model:
+            model_state = [[hidden_process[p-1, j, i] for i in range(cols)] for j in range(n_particles)]
+        else:
+            times = cols / len(mu)
             model_state = [np.array([[hidden_process[p-1, j, h*3 + i] for i in range(len(mu))] for h in range(int(times))]) for j in range(n_particles)]
 
-        if jobs != 1:
-            if Y.shape[1] == 3:
-                simulated_pops = Parallel(n_jobs=jobs)(
-                    delayed(sir_simulate)(
-                        model_state[j],
-                        theta_proposal,
-                        1,
-                        True,
-                    )
-                    for j in range(len(model_state))
+        if "sir_subgroups" not in type_model:
+            simulated_pops = Parallel(n_jobs=jobs)(
+                delayed(model)(
+                    model_state[j],
+                    theta_proposal,
+                    1,
+                    True,
                 )
-            elif Y.shape[1] == 4:
-                simulated_pops = Parallel(n_jobs=jobs)(
-                    delayed(seir_simulate)(
-                        model_state[j],
-                        theta_proposal,
-                        1,
-                        True,
-                    )
-                    for j in range(len(model_state))
-                )
-            elif isinstance(mu, list):
-                simulated_pops = Parallel(n_jobs=jobs)(
-                    delayed(sir_subgroups_simulate)(
-                        model_state[j],
-                        theta_proposal[0],
-                        theta_proposal[1],
-                        1,
-                        True,
-                    )
-                    for j in range(len(model_state))
-                )
+                for j in range(len(model_state))
+            )
         else:
-            if Y.shape[1] == 3:
-                simulated_pops = [
-                    sir_simulate(
-                        model_state[j],
-                        theta_proposal,
-                        1,
-                        True,
-                    )
-                    for j in range(len(model_state))
-                ]
-            if Y.shape[1] == 4:
-                simulated_pops = [
-                    seir_simulate(
-                        model_state[j],
-                        theta_proposal[0],
-                        theta_proposal[1],
-                        1,
-                        True,
-                    )
-                    for j in range(len(model_state))
-                ]
+            simulated_pops = Parallel(n_jobs=jobs)(
+                delayed(sir_subgroups_simulate)(
+                    model_state[j],
+                    theta_proposal[0],
+                    theta_proposal[1],
+                    1,
+                    True,
+                )
+                for j in range(len(model_state))
+            )
 
-        if isinstance(mu, int):
+        if "sir_subgroups" not in type_model:
             hidden_process[p, :, :] = np.array(simulated_pops)[:, :hidden_process.shape[2]]
-        elif isinstance(mu, list):
+        else:
             hidden_process[p, :, :] = np.array([[item for sublist in x for item in sublist] for x in simulated_pops])[:, :hidden_process.shape[2]]
 
         zetas_small[p, :, :] = hidden_process[p, :, :]
+        if type_model == "sir_subgroups2":
+            zetas_small2[p, :, :] = sum([zetas_small[p, :, (i*3):((i+1)*3)] for i in range(len(mu))])
+        else:
+            zetas_small2[p, :, :] = zetas_small[p, :, :]
 
     return zetas, hidden_process, ancestry_matrix
 
@@ -253,6 +246,7 @@ def particle_path_sampler(hidden_process, ancestry_matrix):
 
 def particle_mcmc(
     Y,
+    type_model,
     parameters,
     h,
     sigma = None,
@@ -284,7 +278,7 @@ def particle_mcmc(
             probs2 = max(probs2, 0)
             theta_proposal = theta_proposal[:-1]
 
-        if isinstance(mu, list):
+        if "sir_subgroups" in type_model:
             gamma = theta_proposal[-1]
             beta = np.zeros((len(mu), len(mu)))
             for p in range(len(mu)**2):
@@ -295,6 +289,7 @@ def particle_mcmc(
 
         zetas, hidden_process, ancestry_matrix = particle_filter(
             Y,
+            type_model,
             theta_proposal2,
             observations,
             probs2,
@@ -332,7 +327,7 @@ def particle_mcmc(
             probs2 = max(probs2, 0)
             theta_proposal = theta_proposal[:-1]
 
-        if isinstance(mu, list):
+        if "sir_subgroups" in type_model:
             gamma = theta_proposal[-1]
             beta = np.zeros((len(mu), len(mu)))
             for p in range(len(mu)**2):
@@ -343,6 +338,7 @@ def particle_mcmc(
 
         zetas, hidden_process, ancestry_matrix = particle_filter(
             Y,
+            type_model,
             theta_proposal2,
             observations,
             probs2,
