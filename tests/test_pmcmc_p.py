@@ -43,11 +43,11 @@ data2 = data2[1:]
 # # observed infected and removed
 # data4 = np.array(np.round(dataset.iloc[:, 1:-1]).astype(int))
 
-theta_proposal = [1.9768184925128203, 1.0565016104074507, 0.09617052095125977]
-sigma = np.array([[1.37205778e-01, 9.88305291e-02, 5.51798318e-04],
-       [9.88305291e-02, 7.96786290e-02, 2.62894256e-04],
-       [5.51798318e-04, 2.62894256e-04, 7.39801937e-05]])
-h = .5
+theta_proposal = [1.933708  , 0.95707765, 0.09917913]
+sigma = np.array([[ 8.56210710e-03,  4.96880438e-03, -2.94152350e-05],
+       [ 4.96880438e-03,  3.20130528e-03, -1.73813239e-05],
+       [-2.94152350e-05, -1.73813239e-05,  2.68921978e-06]])
+h = 5
 # results_directory = "pmcmc_adaptive/test1/"
 # results_directory = "data/" + results_directory
 # thetas = np.loadtxt(results_directory + "thetas.csv", delimiter=",")
@@ -71,8 +71,8 @@ thetas, likelihoods, sampled_trajs = particle_mcmc(
     mu=20,
     jobs=-1,
 )
-results_directory = "pmcmc_p/test1/"
-graphs_directory = "PMCMC_2_1_.1/test1/"
+results_directory = "pmcmc_p/test2/"
+graphs_directory = "PMCMC_2_1_.1/test2/"
 
 results_directory = "data/" + results_directory
 graphs_directory = "graphs/" + graphs_directory
@@ -105,7 +105,7 @@ np.savetxt(results_directory + "sampled_trajs_recovered.csv", sampled_trajs[:, :
 # sampled_trajs2 = sampled_trajs[:, burn_in:, :]
 
 # ## apply thinning
-# thinning = 10
+# thinning = 20
 
 # thetas3 = thetas2[::thinning]
 # likelihoods3 = likelihoods2[::thinning]
@@ -130,23 +130,26 @@ np.savetxt(results_directory + "sampled_trajs_recovered.csv", sampled_trajs[:, :
 #     linewidth=1,
 #     label="gamma",
 # )
+# plt.plot(
+#     range(len(likelihoods3)),
+#     thetas3[:, 2],
+#     color="red",
+#     linewidth=1,
+#     label="pobs",
+# )
 # plt.legend()
-# plt.savefig(graphs_directory + "beta_gamma.png", bbox_inches='tight')
-# plt.show()
-
-# ## plot thetas - scatterplot
-# plt.scatter(thetas3[:, 0], thetas3[:, 1])
-# plt.scatter(beta, gamma, color="red")
-# plt.savefig(graphs_directory + "beta_gamma2.png", bbox_inches='tight')
+# plt.savefig(graphs_directory + "theta.png", bbox_inches='tight')
 # plt.show()
 
 # ## plot thetas - histogram
 # plt.hist(thetas3[:, 0], bins=10, alpha=0.5, label="beta")
 # plt.hist(thetas3[:, 1], bins=10, alpha=0.5, label="gamma")
+# plt.hist(thetas3[:, 2], bins=10, alpha=0.5, label="probs")
 # plt.axvline(beta)
 # plt.axvline(gamma)
+# plt.axvline(probs)
 # plt.legend()
-# plt.savefig(graphs_directory + "beta_gamma3.png", bbox_inches='tight')
+# plt.savefig(graphs_directory + "theta2.png", bbox_inches='tight')
 # plt.show()
 
 # ## plot likelihoods
