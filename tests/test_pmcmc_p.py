@@ -60,6 +60,7 @@ h = 5
 
 thetas, likelihoods, sampled_trajs = particle_mcmc(
     data2,
+    "sir",
     theta_proposal,
     h,
     sigma = sigma,
