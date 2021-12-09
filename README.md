@@ -1,0 +1,3 @@
+# Stochastic-Epidemic-Modelling
+
+This is the code for my final-year thesis on Stochastic Epidemic Models. It includes methods and prepared models for using bayesian inferece to sample from the posterior distribution of parameters used by the epidemic models that characterise the disease to track. The algorithms used include the Gillespie Algorithm to simulate a stochastic epidemic and bayesian inference algorithms such as Approximate Bayesian Computation and Particle Markov Chain Monte Carlo. We use the algorithms to analyse various epidemic models such as the SIR, SEIR with observed and hidden data, as well as various variations such as SIR model with missing counts and multiple subgroups.
