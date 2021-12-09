@@ -89,20 +89,20 @@ plt.show()
 
 ## test times 10 particles (2.15s)
 t = time.time()
-zetas, hidden_process, ancestry_matrix = particle_filter(data3, "sir_subgroups2", (beta, gamma), n_population=np.sum(population, axis=1), mu=[15, 20, 25], n_particles=10)
+zetas, hidden_process, ancestry_matrix = particle_filter(data3, "sir_subgroups2", (beta, gamma), n_population=np.sum(population, axis=1), mu=population[:, 1], n_particles=10)
 print(time.time() - t)
 ## test times 100 particles (15.07s)
 t = time.time()
-zetas, hidden_process, ancestry_matrix = particle_filter(data3, "sir_subgroups2", (beta, gamma), n_population=np.sum(population, axis=1), mu=[15, 20, 25], n_particles=100)
+zetas, hidden_process, ancestry_matrix = particle_filter(data3, "sir_subgroups2", (beta, gamma), n_population=np.sum(population, axis=1), mu=population[:, 1], n_particles=100)
 print(time.time() - t)
 
 ## test consistencies
 likelihoods100 = np.array([])
 for _ in range(10):
-    zetas, _, _ = particle_filter(data3, "sir_subgroups2", (beta, gamma), n_population=np.sum(population, axis=1), mu=[15, 20, 25], n_particles=100)
+    zetas, _, _ = particle_filter(data3, "sir_subgroups2", (beta, gamma), n_population=np.sum(population, axis=1), mu=population[:, 1], n_particles=100)
     likelihoods100 = np.append(likelihoods100, zetas[-1])
 
 likelihoods1000 = np.array([])
 for _ in range(10):
-    zetas, _, _ = particle_filter(data3, "sir_subgroups2", (beta, gamma), n_population=np.sum(population, axis=1), mu=[15, 20, 25], n_particles=1000)
+    zetas, _, _ = particle_filter(data3, "sir_subgroups2", (beta, gamma), n_population=np.sum(population, axis=1), mu=population[:, 1], n_particles=1000)
     likelihoods1000 = np.append(likelihoods1000, zetas[-1])
