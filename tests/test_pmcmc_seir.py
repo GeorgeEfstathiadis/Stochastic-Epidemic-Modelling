@@ -91,14 +91,14 @@ np.savetxt(results_directory + "sampled_trajs_recovered.csv", sampled_trajs[:, :
 # sampled_trajs = np.stack((sampled_trajs_susceptible, sampled_trajs_exposed, sampled_trajs_infected, sampled_trajs_recovered), axis=-1)
 
 # # burn-in
-# burn_in = 100
+# burn_in = 0
 
 # thetas2 = thetas[burn_in:, :]
 # likelihoods2 = likelihoods[burn_in:]
 # sampled_trajs2 = sampled_trajs[:, burn_in:, :]
 
 # ## apply thinning
-# thinning = 1
+# thinning = 20
 
 # thetas3 = thetas2[::thinning]
 # likelihoods3 = likelihoods2[::thinning]
