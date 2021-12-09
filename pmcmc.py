@@ -124,11 +124,11 @@ def particle_filter(
     jobs=4,
 ):
     if type_model == "sir":
-        model  = sir_simulate_discrete
+        model = sir_simulate
     elif type_model == "seir":
-        model = seir_simulate_discrete
+        model = seir_simulate
     elif "sir_subgroups" in type_model:
-        model = sir_subgroups_simulate_discrete
+        model = sir_subgroups_simulate
     else:
         raise ValueError("type_model not recognized")
     
