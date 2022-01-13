@@ -301,6 +301,8 @@ def particle_mcmc(
         if zetas is not None:
             break
     trajectory = particle_path_sampler(hidden_process, ancestry_matrix)
+    if type_model == "sir_subgroups2":
+        trajectory = sum([trajectory[:, (i*3):((i+1)*3)] for i in range(len(mu))])
 
     if probs is None:
         theta_proposal = np.append(theta_proposal, probs2)
@@ -354,6 +356,8 @@ def particle_mcmc(
             continue
         
         trajectory = particle_path_sampler(hidden_process, ancestry_matrix)
+        if type_model == "sir_subgroups2":
+            trajectory = sum([trajectory[:, (i*3):((i+1)*3)] for i in range(len(mu))])
 
         if probs is None:
             theta_proposal = np.append(theta_proposal, probs2)
