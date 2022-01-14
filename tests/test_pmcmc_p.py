@@ -1,14 +1,8 @@
 import os
-import time
 import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
-from joblib import Parallel, delayed
-from scipy.integrate import odeint
-from scipy.stats import binom, norm
-from tqdm import tqdm
 
 sys.path.append('.')
 
@@ -21,62 +15,36 @@ beta, gamma, probs = 2, 1, .1
 
 dataset = sir_simulate_discrete(y0, t, beta, gamma)
 
-# # observed process - HMM
-# data1 = np.array([])
-# prob_obs = 0.1
-# for t in range(dataset.shape[0]):
-#     y = np.random.binomial(dataset.iloc[t, 2], prob_obs)
-#     data1 = np.append(data1, y)
+data2 = np.loadtxt("data/simulated_datasets/sir_underreported.csv", delimiter=", ")
 
-# observed process - HMM + all
-data2 = np.array([[0, 0, 0]])
-for t in range(dataset.shape[0]):
-    sus = np.random.binomial(dataset.iloc[t, 1], probs)
-    inf = np.random.binomial(dataset.iloc[t, 2], probs)
-    rec = np.random.binomial(dataset.iloc[t, 3], probs)
-    data2 = np.append(data2, np.array([[sus, inf, rec]]), axis=0)
-data2 = data2[1:]
-
-# # observed infected
-# data3 = np.array(np.round(dataset.iloc[:, 2]).astype(int))
-
-# # observed infected and removed
-# data4 = np.array(np.round(dataset.iloc[:, 1:-1]).astype(int))
-
-theta_proposal = [1.933708  , 0.95707765, 0.09917913]
-sigma = np.array([[ 8.56210710e-03,  4.96880438e-03, -2.94152350e-05],
-       [ 4.96880438e-03,  3.20130528e-03, -1.73813239e-05],
-       [-2.94152350e-05, -1.73813239e-05,  2.68921978e-06]])
-h = 5
-# results_directory = "pmcmc_adaptive/test1/"
-# results_directory = "data/" + results_directory
-# thetas = np.loadtxt(results_directory + "thetas.csv", delimiter=",")
-# thetas2 = thetas[100:, :]
-# thetas3 = thetas2[::20]
-# thetas_unique = np.unique(thetas3, axis=0)
-# theta_proposal = thetas[-1].tolist()
-# sigma = np.cov(thetas_unique.T, ddof=0)
-# h = 10
+results_directory = "pmcmc_adaptive/test2/"
+results_directory = "data/" + results_directory
+thetas = np.loadtxt(results_directory + "thetas.csv", delimiter=",")
+thetas2 = thetas[100:, :]
+thetas3 = thetas2[::20]
+thetas_unique = np.unique(thetas3, axis=0)
+theta_proposal = thetas[-1].tolist()
+sigma = np.cov(thetas_unique.T, ddof=0)
+h = 10
 
 thetas, likelihoods, sampled_trajs = particle_mcmc(
     data2,
     "sir",
     theta_proposal,
     h,
-    sigma = sigma,
+    sigma=sigma,
     n_chains=5000,
-    observations = False,
+    observations=False,
     probs=None,
     n_particles=100,
     n_population=4820,
     mu=20,
     jobs=-1,
 )
-results_directory = "pmcmc_p/test2/"
-graphs_directory = "PMCMC_2_1_.1/test2/"
+directory = "pmcmc_p/test3/"
 
-results_directory = "data/" + results_directory
-graphs_directory = "graphs/" + graphs_directory
+results_directory = "data/" + directory
+graphs_directory = "graphs/" + directory
 
 if not os.path.exists(results_directory):
     os.makedirs(results_directory)

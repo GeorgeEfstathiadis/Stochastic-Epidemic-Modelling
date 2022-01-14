@@ -1,14 +1,8 @@
 import os
-import time
 import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
-from joblib import Parallel, delayed
-from scipy.integrate import odeint
-from scipy.stats import binom, norm
-from tqdm import tqdm
 
 sys.path.append('.')
 
@@ -21,38 +15,23 @@ parameters = [4, 1, 1]
 
 dataset = seir_simulate_discrete(y0, t, parameters[0], parameters[1], parameters[2])
 
-# observed process - HMM + all
-data2 = np.array([[0, 0, 0, 0]])
-prob_obs = 0.1
-for t in range(dataset.shape[0]):
-    sus = np.random.binomial(dataset.iloc[t, 1], prob_obs)
-    exp = np.random.binomial(dataset.iloc[t, 2], prob_obs)
-    inf = np.random.binomial(dataset.iloc[t, 3], prob_obs)
-    rec = np.random.binomial(dataset.iloc[t, 4], prob_obs)
-    data2 = np.append(data2, np.array([[sus, exp, inf, rec]]), axis=0)
-data2 = data2[1:]
+data2 = np.loadtxt("data/simulated_datasets/seir_underreported.csv", delimiter=", ")
 
-sigma = np.array(
-    [
-        [ 0.0743337 , -0.00724316,  0.0178649 ],
-        [-0.00724316,  0.01109966,  0.00191581],
-        [ 0.0178649 ,  0.00191581,  0.01025782]
-    ]
-)
-parameters0 = [4.01702919, 0.91147714, 0.79621439]
-# results_directory = "pmcmc_seir_adaptive/test1/"
-# results_directory = "data/" + results_directory
-# thetas = np.loadtxt(results_directory + "thetas.csv", delimiter=",")
-# thetas2 = thetas[100:, :]
-# thetas3 = thetas2[::20]
-# thetas_unique = np.unique(thetas3, axis=0)
-# parameters0 = thetas[-1].tolist()
-# sigma = np.cov(thetas_unique.T, ddof=0)
+results_directory = "pmcmc_seir/test3/"
+results_directory = "data/" + results_directory
+thetas = np.loadtxt(results_directory + "thetas.csv", delimiter=",")
+thetas2 = thetas[100:, :]
+thetas3 = thetas2[::20]
+thetas_unique = np.unique(thetas3, axis=0)
+parameters0 = thetas[-1].tolist()
+sigma = np.cov(thetas_unique.T, ddof=0)
+h = 1
 
 thetas, likelihoods, sampled_trajs = particle_mcmc(
     data2,
+    "seir",
     parameters0,
-    5,
+    h,
     sigma=sigma,
     n_chains=5000,
     observations=False,
@@ -62,8 +41,7 @@ thetas, likelihoods, sampled_trajs = particle_mcmc(
     mu=20,
     jobs=-1,
 )
-results_directory = "pmcmc_seir/test3/"
-graphs_directory = "PMCMC_4_1_1/seir/test3/"
+directory = "pmcmc_seir/test4/"
 
 results_directory = "data/" + results_directory
 graphs_directory = "graphs/" + graphs_directory

@@ -1,14 +1,8 @@
 import os
-import time
 import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
-from joblib import Parallel, delayed
-from scipy.integrate import odeint
-from scipy.stats import binom, norm
-from tqdm import tqdm
 
 sys.path.append('.')
 
@@ -123,7 +117,7 @@ np.savetxt(results_directory + "sampled_trajs_recovered.csv", sampled_trajs[:, :
 # sampled_trajs2 = sampled_trajs[:, burn_in:, :]
 
 # ## apply thinning
-# thinning = 5
+# thinning = 100
 
 # thetas3 = thetas2[::thinning]
 # likelihoods3 = likelihoods2[::thinning]
@@ -187,7 +181,7 @@ np.savetxt(results_directory + "sampled_trajs_recovered.csv", sampled_trajs[:, :
 # plt.plot(
 #     range(len(data2)), sampled_trajs3[:, :, 2], "orange", linewidth=1
 # )
-# lines4 = plt.plot(range(len(data2)), dataset.iloc[:, 1:], "k", linewidth=2)
+# lines4 = plt.plot(range(len(data2)), data.iloc[:, 1:], "k", linewidth=2)
 # lines5 = plt.plot(range(len(data2)), data2, "k--", linewidth=2)
 # plt.legend(
 #     lines1[:1] + lines4 + lines5,

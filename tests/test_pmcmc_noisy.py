@@ -19,11 +19,15 @@ t = np.linspace(0, 14, num=200)
 y0 = (4800, 20, 0)
 beta, gamma = 2, 1
 
+dataset = sir_simulate_discrete(y0, t, beta, gamma)
 data1 = np.loadtxt("data/simulated_datasets/sir_noise.csv", delimiter=", ")
 
-theta_proposal = [3, 2]
-sigma = np.eye(2)
-h = .5
+theta_proposal = [1.99257163, 0.98910934]
+sigma = np.array([
+    [0.02938888, 0.01312896],
+    [0.01312896, 0.00594063]
+    ])
+h = .1
 # results_directory = "pmcmc_adaptive/test1/"
 # results_directory = "data/" + results_directory
 # thetas = np.loadtxt(results_directory + "thetas.csv", delimiter=",")
@@ -49,11 +53,10 @@ thetas, likelihoods, sampled_trajs = particle_mcmc(
     mu=20,
     jobs=-1,
 )
-results_directory = "pmcmc_noisy/test0/"
-graphs_directory = "pmcmc_noisy/test0/"
+directory = "pmcmc_noisy/test1/"
 
-results_directory = "data/" + results_directory
-graphs_directory = "graphs/" + graphs_directory
+results_directory = "data/" + directory
+graphs_directory = "graphs/" + directory
 
 if not os.path.exists(results_directory):
     os.makedirs(results_directory)
@@ -83,7 +86,7 @@ np.savetxt(results_directory + "sampled_trajs_recovered.csv", sampled_trajs[:, :
 # sampled_trajs2 = sampled_trajs[:, burn_in:, :]
 
 # ## apply thinning
-# thinning = 10
+# thinning = 25
 
 # thetas3 = thetas2[::thinning]
 # likelihoods3 = likelihoods2[::thinning]
@@ -134,16 +137,16 @@ np.savetxt(results_directory + "sampled_trajs_recovered.csv", sampled_trajs[:, :
 
 # ## plot trajectories
 # lines1 = plt.plot(
-#     range(len(data2)), sampled_trajs3[:, :, 0], "orange", linewidth=1
+#     range(len(data1)), sampled_trajs3[:, :, 0], "orange", linewidth=1
 # )
 # plt.plot(
-#     range(len(data2)), sampled_trajs3[:, :, 1], "orange", linewidth=1
+#     range(len(data1)), sampled_trajs3[:, :, 1], "orange", linewidth=1
 # )
 # plt.plot(
-#     range(len(data2)), sampled_trajs3[:, :, 2], "orange", linewidth=1
+#     range(len(data1)), sampled_trajs3[:, :, 2], "orange", linewidth=1
 # )
-# lines4 = plt.plot(range(len(data2)), dataset.iloc[:, 1:], "k", linewidth=2)
-# lines5 = plt.plot(range(len(data2)), data2, "k--", linewidth=2)
+# lines4 = plt.plot(range(len(data1)), dataset.iloc[:, 1:], "k", linewidth=2)
+# lines5 = plt.plot(range(len(data1)), data1, "k--", linewidth=2)
 # plt.legend(
 #     lines1[:1] + lines4 + lines5,
 #     ["particle trajectories", "hidden infected", "observed infected"],
