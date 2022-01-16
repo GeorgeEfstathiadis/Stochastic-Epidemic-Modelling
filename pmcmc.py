@@ -1,12 +1,13 @@
 import os
 import time
+from enum import Enum
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
 from scipy.integrate import odeint
-from scipy.stats import binom, norm, multivariate_normal
+from scipy.stats import binom, multivariate_normal, norm
 from tqdm import tqdm
 
 from gillespie_algo import *
@@ -112,6 +113,13 @@ def sir_subgroups_simulate_discrete(y0, t, beta, gamma):
     return data3.iloc[:, 1:]
 
 
+class ModelType(Enum):
+    SIR = "sir"
+    SEIR = "seir"
+    SIR_SUBGROUPS = "sir_subgroups"
+    SIR_SUBGROUPS2 = "sir_subgroups2"
+
+
 def particle_filter(
     Y,
     type_model,
@@ -123,16 +131,14 @@ def particle_filter(
     mu=20,
     jobs=4,
 ):
-    if type_model == "sir":
+    if type_model == ModelType.SIR:
         model = sir_simulate
-    elif type_model == "seir":
+    elif type_model == ModelType.SEIR:
         model = seir_simulate
-    elif "sir_subgroups" in type_model:
-        model = sir_subgroups_simulate
     else:
-        raise ValueError("type_model not recognized")
+        model = sir_subgroups_simulate
     
-    if type_model == "sir_subgroups2":
+    if type_model == ModelType.SIR_SUBGROUPS:
         cols = len(mu) * Y.shape[1]
         zetas_small2 = np.zeros((len(Y), n_particles, Y.shape[1]))
     else:
@@ -148,23 +154,23 @@ def particle_filter(
 
     zetas[0] = 1
 
-    if type_model == "sir":
+    if type_model == ModelType.SIR:
         zetas_small[0, :, 1] = np.random.poisson(mu, n_particles)
         zetas_small[0, :, 0] = n_population - zetas_small[0, :, 1]
         zetas_small[0, :, 2] = 0
-    elif type_model == "seir":
+    elif type_model == ModelType.SEIR:
         zetas_small[0, :, 2] = np.random.poisson(mu, n_particles)
         zetas_small[0, :, 0] = n_population - zetas_small[0, :, 2]
         zetas_small[0, :, 1] = 0
         zetas_small[0, :, 3] = 0
-    elif "sir_subgroups" in type_model:
+    else:
         for i in range(len(mu)):
             zetas_small[0, :, i*3 + 1] = np.random.poisson(mu[i], n_particles)
             zetas_small[0, :, i*3 + 0] = n_population[i] - zetas_small[0, :, i*3 + 1]
             zetas_small[0, :, i*3 + 2] = 0
     hidden_process[0, :, :] = zetas_small[0, :, :]
 
-    if type_model == "sir_subgroups2":
+    if type_model == ModelType.SIR_SUBGROUPS2:
         zetas_small2[0, :, :] = sum([zetas_small[0, :, (i*3):((i+1)*3)] for i in range(len(mu))])
     else:
         zetas_small2[0, :, :] = zetas_small[0, :, :]
@@ -187,13 +193,13 @@ def particle_filter(
             return None, None, None
         ancestry_matrix[p, :] = likely_particles
 
-        if "sir_subgroups" not in type_model:
+        if type_model in [ModelType.SIR, ModelType.SEIR]:
             model_state = [[hidden_process[p-1, j, i] for i in range(cols)] for j in range(n_particles)]
         else:
             times = cols / len(mu)
             model_state = [np.array([[hidden_process[p-1, j, h*3 + i] for i in range(len(mu))] for h in range(int(times))]) for j in range(n_particles)]
 
-        if "sir_subgroups" not in type_model:
+        if type_model in [ModelType.SIR, ModelType.SEIR]:
             simulated_pops = Parallel(n_jobs=jobs)(
                 delayed(model)(
                     model_state[j],
@@ -215,13 +221,13 @@ def particle_filter(
                 for j in range(len(model_state))
             )
 
-        if "sir_subgroups" not in type_model:
+        if type_model in [ModelType.SIR, ModelType.SEIR]:
             hidden_process[p, :, :] = np.array(simulated_pops)[:, :hidden_process.shape[2]]
         else:
             hidden_process[p, :, :] = np.array([[item for sublist in x for item in sublist] for x in simulated_pops])[:, :hidden_process.shape[2]]
 
         zetas_small[p, :, :] = hidden_process[p, :, :]
-        if type_model == "sir_subgroups2":
+        if type_model == ModelType.SIR_SUBGROUPS2:
             zetas_small2[p, :, :] = sum([zetas_small[p, :, (i*3):((i+1)*3)] for i in range(len(mu))])
         else:
             zetas_small2[p, :, :] = zetas_small[p, :, :]
@@ -278,7 +284,7 @@ def particle_mcmc(
             probs2 = max(probs2, 0)
             theta_proposal = theta_proposal[:-1]
 
-        if "sir_subgroups" in type_model:
+        if type_model in [ModelType.SIR_SUBGROUPS, ModelType.SIR_SUBGROUPS2]:
             gamma = theta_proposal[-1]
             beta = np.zeros((len(mu), len(mu)))
             for p in range(len(mu)**2):
@@ -301,7 +307,7 @@ def particle_mcmc(
         if zetas is not None:
             break
     trajectory = particle_path_sampler(hidden_process, ancestry_matrix)
-    if type_model == "sir_subgroups2":
+    if type_model == ModelType.SIR_SUBGROUPS2:
         trajectory = sum([trajectory[:, (i*3):((i+1)*3)] for i in range(len(mu))])
 
     if probs is None:
@@ -329,7 +335,7 @@ def particle_mcmc(
             probs2 = max(probs2, 0)
             theta_proposal = theta_proposal[:-1]
 
-        if "sir_subgroups" in type_model:
+        if type_model in [ModelType.SIR_SUBGROUPS, ModelType.SIR_SUBGROUPS2]:
             gamma = theta_proposal[-1]
             beta = np.zeros((len(mu), len(mu)))
             for p in range(len(mu)**2):
@@ -356,7 +362,7 @@ def particle_mcmc(
             continue
         
         trajectory = particle_path_sampler(hidden_process, ancestry_matrix)
-        if type_model == "sir_subgroups2":
+        if type_model == ModelType.SIR_SUBGROUPS2:
             trajectory = sum([trajectory[:, (i*3):((i+1)*3)] for i in range(len(mu))])
 
         if probs is None:
