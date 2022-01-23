@@ -138,15 +138,14 @@ def particle_filter(
     else:
         model = sir_subgroups_simulate
     
-    if type_model == ModelType.SIR_SUBGROUPS:
+    if type_model == ModelType.SIR_SUBGROUPS2:
         cols = len(mu) * Y.shape[1]
-        zetas_small2 = np.zeros((len(Y), n_particles, Y.shape[1]))
     else:
         cols = Y.shape[1]
-        zetas_small2 = np.zeros((len(Y), n_particles, cols))
     
     zetas = np.zeros(len(Y))
     zetas_small = np.zeros((len(Y), n_particles, cols))
+    zetas_small2 = np.zeros((len(Y), n_particles, Y.shape[1]))
     weights = np.zeros((len(Y), n_particles))
     normalised_weights = np.zeros((len(Y), n_particles))
     hidden_process = np.zeros((len(Y), n_particles, cols))
@@ -194,11 +193,10 @@ def particle_filter(
         ancestry_matrix[p, :] = likely_particles
 
         if type_model in [ModelType.SIR, ModelType.SEIR]:
-            model_state = [[hidden_process[p-1, j, i] for i in range(cols)] for j in range(n_particles)]
+            model_state = [[hidden_process[p-1, j, i] for i in range(Y.shape[1])] for j in likely_particles]
         else:
             times = cols / len(mu)
-            model_state = [np.array([[hidden_process[p-1, j, h*3 + i] for i in range(len(mu))] for h in range(int(times))]) for j in range(n_particles)]
-
+            model_state = [np.array([[hidden_process[p-1, j, i*3 + h] for h in range(int(times))] for i in range(len(mu))]) for j in likely_particles]
         if type_model in [ModelType.SIR, ModelType.SEIR]:
             simulated_pops = Parallel(n_jobs=jobs)(
                 delayed(model)(
