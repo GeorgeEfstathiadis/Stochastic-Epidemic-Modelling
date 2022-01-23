@@ -4,19 +4,15 @@ import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
-from joblib import Parallel, delayed
-from scipy.integrate import odeint
-from scipy.stats import binom, norm
-from tqdm import tqdm
 
 sys.path.append('.')
 
 from gillespie_algo import *
 from pmcmc import *
 
-population = np.array([[1000, 15, 0], [1500, 20, 0], [2000, 25, 0]])
-beta = np.array([[15, 5, 2], [1, 8, 4], [1, 5, 10]])
+population = np.array([[1000, 15, 0], [1500, 20, 0]])
+no_compartments = population.shape[0] * population.shape[1]
+beta = np.array([[15, 5], [1, 8]])
 gamma = .5
 t = np.linspace(0, 10, num=200)
 
@@ -25,31 +21,28 @@ data = sir_subgroups_simulate_discrete(population, t, beta, gamma)
 
 plt.plot(data.time, data.susceptible0, label='s_0')
 plt.plot(data.time, data.susceptible1, label='s_1')
-plt.plot(data.time, data.susceptible2, label='s_2')
 plt.plot(data.time, data.infected0, label='i_0')
 plt.plot(data.time, data.infected1, label='i_1')
-plt.plot(data.time, data.infected2, label='i_2')
 plt.plot(data.time, data.removed0, label='r_0')
 plt.plot(data.time, data.removed1, label='r_1')
-plt.plot(data.time, data.removed2, label='r_2')
 plt.legend()
 plt.show()
 
 # HMM
 # observed process - HMM + all
-data2 = np.array([[0, 0, 0, 0, 0, 0, 0, 0, 0]])
+data2 = np.array([[0] * no_compartments])
 prob_obs = 0.1
 for t in range(data.shape[0]):
     res = []
-    for c in range(9):
+    for c in range(no_compartments):
         res.append(np.random.binomial(data.iloc[t, c], prob_obs))
     data2 = np.append(data2, np.array([res]), axis=0)
 data2 = data2[1:]
 
-data3 = data2[:, :3] + data2[:, 3:6] + data2[:, 6:]
+data3 = data2[:, :3] + data2[:, 3:]
 
 # particle filter
-zetas, hidden_process, ancestry_matrix = particle_filter(data3, "sir_subgroups2", (beta, gamma), n_population=np.sum(population, axis=1), mu=population[:, 1] , n_particles=10)
+zetas, hidden_process, ancestry_matrix = particle_filter(data3, ModelType.SIR_SUBGROUPS2, (beta, gamma), n_population=np.sum(population, axis=1), mu=population[:, 1] , n_particles=10)
 
 ## results per particle viz
 for i in range(len(data2)):
@@ -87,22 +80,22 @@ for j in range(trajectory.shape[1]):
         )
 plt.show()
 
-## test times 10 particles (2.15s)
+## test times 10 particles (0.68s)
 t = time.time()
-zetas, hidden_process, ancestry_matrix = particle_filter(data3, "sir_subgroups2", (beta, gamma), n_population=np.sum(population, axis=1), mu=population[:, 1], n_particles=10)
+zetas, hidden_process, ancestry_matrix = particle_filter(data3, ModelType.SIR_SUBGROUPS2, (beta, gamma), n_population=np.sum(population, axis=1), mu=population[:, 1], n_particles=10)
 print(time.time() - t)
-## test times 100 particles (15.07s)
+## test times 100 particles (5.68s)
 t = time.time()
-zetas, hidden_process, ancestry_matrix = particle_filter(data3, "sir_subgroups2", (beta, gamma), n_population=np.sum(population, axis=1), mu=population[:, 1], n_particles=100)
+zetas, hidden_process, ancestry_matrix = particle_filter(data3, ModelType.SIR_SUBGROUPS2, (beta, gamma), n_population=np.sum(population, axis=1), mu=population[:, 1], n_particles=100)
 print(time.time() - t)
 
 ## test consistencies
 likelihoods100 = np.array([])
 for _ in range(10):
-    zetas, _, _ = particle_filter(data3, "sir_subgroups2", (beta, gamma), n_population=np.sum(population, axis=1), mu=population[:, 1], n_particles=100)
+    zetas, _, _ = particle_filter(data3, ModelType.SIR_SUBGROUPS2, (beta, gamma), n_population=np.sum(population, axis=1), mu=population[:, 1], n_particles=100)
     likelihoods100 = np.append(likelihoods100, zetas[-1])
 
 likelihoods1000 = np.array([])
 for _ in range(10):
-    zetas, _, _ = particle_filter(data3, "sir_subgroups2", (beta, gamma), n_population=np.sum(population, axis=1), mu=population[:, 1], n_particles=1000)
+    zetas, _, _ = particle_filter(data3, ModelType.SIR_SUBGROUPS2, (beta, gamma), n_population=np.sum(population, axis=1), mu=population[:, 1], n_particles=1000)
     likelihoods1000 = np.append(likelihoods1000, zetas[-1])
