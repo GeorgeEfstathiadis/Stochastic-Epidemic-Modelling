@@ -1,14 +1,8 @@
 import os
-import time
 import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
-from joblib import Parallel, delayed
-from scipy.integrate import odeint
-from scipy.stats import binom, norm
-from tqdm import tqdm
 
 sys.path.append('.')
 
@@ -22,38 +16,32 @@ beta, gamma = 2, 1
 dataset = sir_simulate_discrete(y0, t, beta, gamma)
 data1 = np.loadtxt("data/simulated_datasets/sir_noise.csv", delimiter=", ")
 
-theta_proposal = [1.99257163, 0.98910934]
-sigma = np.array([
-    [0.02938888, 0.01312896],
-    [0.01312896, 0.00594063]
-    ])
-h = .1
-# results_directory = "pmcmc_adaptive/test1/"
-# results_directory = "data/" + results_directory
-# thetas = np.loadtxt(results_directory + "thetas.csv", delimiter=",")
-# thetas2 = thetas[100:, :]
-# thetas3 = thetas2[::20]
-# thetas_unique = np.unique(thetas3, axis=0)
-# theta_proposal = thetas[-1].tolist()
-# sigma = np.cov(thetas_unique.T, ddof=0)
-# h = 10
+results_directory = "pmcmc_noisy/test1/"
+results_directory = "data/" + results_directory
+thetas = np.loadtxt(results_directory + "thetas.csv", delimiter=",")
+thetas2 = thetas[100:, :]
+thetas3 = thetas2[::20]
+thetas_unique = np.unique(thetas3, axis=0)
+theta_proposal = thetas[-1].tolist()
+sigma = np.cov(thetas_unique.T, ddof=0)
+h = .25
 
 
 thetas, likelihoods, sampled_trajs = particle_mcmc(
     data1,
-    "sir",
+    ModelType.SIR,
     theta_proposal,
     h,
-    sigma = sigma,
-    n_chains=5000,
-    observations = True,
+    sigma=sigma,
+    n_chains=10000,
+    observations=True,
     probs=.5,
     n_particles=100,
     n_population=4820,
     mu=20,
     jobs=-1,
 )
-directory = "pmcmc_noisy/test1/"
+directory = "pmcmc_noisy/test2/"
 
 results_directory = "data/" + directory
 graphs_directory = "graphs/" + directory
@@ -86,7 +74,7 @@ np.savetxt(results_directory + "sampled_trajs_recovered.csv", sampled_trajs[:, :
 # sampled_trajs2 = sampled_trajs[:, burn_in:, :]
 
 # ## apply thinning
-# thinning = 25
+# thinning = 20
 
 # thetas3 = thetas2[::thinning]
 # likelihoods3 = likelihoods2[::thinning]

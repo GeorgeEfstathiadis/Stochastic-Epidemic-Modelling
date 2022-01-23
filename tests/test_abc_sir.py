@@ -1,15 +1,8 @@
 import os
-import time
 import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
-from joblib import Parallel, delayed
-from scipy.integrate import odeint
-from scipy.stats import binom, norm
-import json
-from tqdm import tqdm
 
 sys.path.append('.')
 
@@ -44,11 +37,11 @@ data1 = np.loadtxt("data/simulated_datasets/sir_noise.csv", delimiter=", ")
 # plt.legend()
 # plt.show()
 
-thetas, sampled_trajs = abc_algo(data1, 100, 200, {'beta': [0, 5], 'gamma': [0, 5]})
+thetas, sampled_trajs = abc_algo(data1, 1000, 150, {'beta': [0, 5], 'gamma': [0, 5]})
 thetas = np.array([[thetas['beta'][i], thetas['gamma'][i]] for i in range(len(thetas['beta']))])
 
-results_directory = "rejection_sampling_results/test0/"
-graphs_directory = "rejection_sampling_results/test0/"
+results_directory = "rejection_sampling_results/run1/"
+graphs_directory = "rejection_sampling_results/run1/"
 
 results_directory = "data/" + results_directory
 graphs_directory = "graphs/" + graphs_directory
