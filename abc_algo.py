@@ -37,6 +37,7 @@ def abc_algo(observed_data, no_of_samples, threshold, priors):
             gamma = np.random.uniform(priors['gamma'][0], priors['gamma'][1])
             # generate the sim data
             n_start = observed_data[0, :].astype(int)
+            n_start = np.random.poisson(n_start)
             sim_traj = sir_simulate(
                 list(n_start),
                 np.array([beta, gamma]),
