@@ -1,17 +1,16 @@
 import numpy as np
 import scipy.stats
+import arviz as az
 
-def mean_confidence_interval(data, confidence=0.95):
-    a = 1.0 * np.array(data)
+def mean_credible_interval(data, alpha=0.95):
+    a = np.array(data)
     n = len(a)
     if len(a.shape) == 2:
         m = np.mean(a, axis=1)
-        se = scipy.stats.sem(a, axis=1)
     else:
         m = np.mean(a)
-        se = scipy.stats.sem(a)
-    h = se * scipy.stats.t.ppf((1 + confidence) / 2., n-1)
-    return m, m-h, m+h
+    ci_95 = az.hdi(a, hdi_prob=0.95)
+    return m, *ci_95
 
 def gelman_rubin_test(chains):
     M = len(chains)
