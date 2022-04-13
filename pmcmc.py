@@ -176,9 +176,9 @@ def particle_filter(
 
     for p in range(1, len(Y)):
         if not observations:
-            weights[p, :] = np.min(np.array([binom.pmf(Y[p - 1, i], zetas_small2[p - 1, :, i], probs) for i in range(Y.shape[1])]), axis=0)
+            weights[p, :] = np.min(np.array([binom.pmf(Y[p-1, i], zetas_small2[p-1, :, i], probs) for i in range(Y.shape[1])]), axis=0)
         else:
-            weights[p, :] = np.min(np.array([binom.pmf(Y[p-1, i], zetas_small2[p-1, :, i] / probs, probs) for i in range(Y.shape[1])]), axis=0)
+            weights[p, :] = np.min(np.array([norm.pdf(Y[p-1, i], zetas_small2[p-1, :, i], probs*zetas_small2[p-1, :, i]+.0001) for i in range(Y.shape[1])]), axis=0)
 
         zetas[p] = zetas[p - 1] * np.mean(weights[p, :])
 
@@ -253,7 +253,8 @@ def particle_mcmc(
     type_model,
     parameters,
     h,
-    sigma = None,
+    adaptive=False,
+    sigma=None,
     n_chains=1000,
     observations=False,
     probs=.1,
@@ -273,11 +274,11 @@ def particle_mcmc(
     if sigma is None:
         std = np.eye(len(parameters))        
     while True:
-        theta_proposal = abs(
-            np.random.multivariate_normal(
-                np.array(parameters), h*std
-            )
+        theta_proposal = np.random.multivariate_normal(
+            np.array(parameters), h*std
         )
+        if sum(theta_proposal < 0) > 0:
+            continue
 
         probs2 = probs
         if probs is None:
@@ -322,11 +323,18 @@ def particle_mcmc(
     acceptances = 1
 
     for i in range(1, n_chains):
-        theta_proposal = abs(
-            np.random.multivariate_normal(
-                thetas[i-1], h*std
-            )
+
+        if adaptive and i>1e3:
+            std = np.cov(thetas[:i].T, ddof=0) + 1e-4*np.eye(len(parameters))
+
+        theta_proposal = np.random.multivariate_normal(
+            thetas[i-1], h*std
         )
+        if sum(theta_proposal < 0) > 0:
+            thetas[i, :] = thetas[i - 1, :]
+            likelihoods[i] = likelihoods[i - 1]
+            sampled_trajs[:, i, :] = sampled_trajs[:, i - 1, :]
+            continue
 
         probs2 = probs
         if probs is None:
@@ -371,14 +379,14 @@ def particle_mcmc(
             constant = 1
         prob = (
             1e1 ** constant
-            * multivariate_normal.cdf(theta_proposal, np.array(parameters), h*std)
-            * multivariate_normal.cdf(thetas[i - 1], theta_proposal, h*std)
+            * multivariate_normal.pdf(theta_proposal, np.array(parameters), h*std)
+            * multivariate_normal.pdf(thetas[i - 1], theta_proposal, h*std)
             * zetas[-1]
         )
         prob /= (
             1e1 ** constant
-            * multivariate_normal.cdf(np.array(parameters), theta_proposal, h*std)
-            * multivariate_normal.cdf(theta_proposal, thetas[i-1], h*std)
+            * multivariate_normal.pdf(np.array(parameters), theta_proposal, h*std)
+            * multivariate_normal.pdf(theta_proposal, thetas[i-1], h*std)
             * likelihoods[i - 1]
         )
 
