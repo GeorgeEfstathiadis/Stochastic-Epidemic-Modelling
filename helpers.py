@@ -47,3 +47,8 @@ def running_mean(x, N):
     cumsum = np.cumsum(np.insert(x, 0, 0)) 
     return (cumsum[N:] - cumsum[:-N]) / float(N)
  
+
+def posterior_mse(true_prm, chain):
+    """Compute the posterior mean squared error
+    """
+    return np.mean((chain - true_prm) ** 2)
